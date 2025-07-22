@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 VolTrack - Sistem Tracking Volume Kendaraan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-shadow:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .btn-modern {
+            transition: all 0.2s ease;
+            transform: translateY(0);
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-1px);
+        }
+
+        .input-modern {
+            transition: all 0.2s ease;
+        }
+
+        .input-modern:focus {
+            transform: translateY(-1px);
+        }
+
+        .volume-display {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8 animate-fade-in">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <div class="p-3 bg-blue-600 rounded-xl shadow-lg">
+                    <i class="fas fa-box text-white text-2xl"></i>
+                </div>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                    VolTrack
+                </h1>
+            </div>
+            <p class="text-slate-600 text-lg">Sistem Tracking Volume Kendaraan</p>
+        </div>
+
+        <form id="calculatorForm">
+            <!-- Informasi Dokumen -->
+            <div class="bg-white rounded-xl card-shadow mb-6 overflow-hidden animate-fade-in">
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-file-text text-blue-600"></i>
+                        <h2 class="text-xl font-semibold text-gray-800">Informasi Dokumen</h2>
+                    </div>
+                    <p class="text-gray-500 text-sm">Data surat jalan dari kendaraan</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="no_surat_jalan" class="block text-sm font-medium text-gray-700">No. Surat
+                                Jalan</label>
+                            <input type="text"
+                                class="input-modern w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                id="no_surat_jalan" name="no_surat_jalan" placeholder="Masukkan nomor surat jalan"
+                                required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="no_polisi" class="block text-sm font-medium text-gray-700">No. Polisi /
+                                Plat</label>
+                            <input type="text"
+                                class="input-modern w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                id="no_polisi" name="no_polisi" placeholder="Masukkan nomor polisi" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dimensi Kendaraan -->
+            <div class="bg-white rounded-xl card-shadow mb-6 overflow-hidden animate-fade-in">
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-ruler text-blue-600"></i>
+                        <h2 class="text-xl font-semibold text-gray-800">Dimensi Kendaraan</h2>
+                    </div>
+                    <p class="text-gray-500 text-sm">Ukuran dalam centimeter (cm)</p>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="panjang" class="block text-sm font-medium text-gray-700">Panjang (cm)</label>
+                            <input type="number"
+                                class="input-modern w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                id="panjang" name="panjang" step="1" placeholder="600" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="lebar" class="block text-sm font-medium text-gray-700">Lebar (cm)</label>
+                            <input type="number"
+                                class="input-modern w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                id="lebar" name="lebar" step="1" placeholder="235" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="tinggi" class="block text-sm font-medium text-gray-700">Tinggi (cm)</label>
+                            <input type="number"
+                                class="input-modern w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                id="tinggi" name="tinggi" step="1" placeholder="200" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="potongan_tinggi" class="block text-sm font-medium text-gray-700">Potongan Tinggi
+                                (cm)</label>
+                            <input type="number"
+                                class="input-modern w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                                id="potongan_tinggi" name="potongan_tinggi" step="1" placeholder="32">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Volume Hasil Perhitungan -->
+            <div class="bg-white rounded-xl card-shadow mb-6 overflow-hidden animate-fade-in">
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-chart-bar text-blue-600"></i>
+                        <h2 class="text-xl font-semibold text-gray-800">Volume Hasil Perhitungan</h2>
+                    </div>
+                    <p class="text-gray-500 text-sm">Volume dihitung otomatis: (Panjang × Lebar × (Tinggi - Potongan
+                        Tinggi)) / 1.000.000</p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start gap-2">
+                            <i class="fas fa-calculator text-blue-600 mt-1"></i>
+                            <div class="text-sm text-blue-800">
+                                <strong>Contoh:</strong> Panjang = 600cm, Lebar = 235cm, Tinggi = 200cm, Potongan =
+                                32cm<br>
+                                <strong>Perhitungan:</strong> 600 × 235 × (200-32) = 600 × 235 × 168 = 23.688.000 cm³
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="volume-display rounded-xl p-6 text-center border border-blue-200" id="volumeResult"
+                        style="display: none;">
+                        <div class="mb-2">
+                            <label class="text-sm font-medium text-slate-600">Volume (m³)</label>
+                        </div>
+                        <div class="text-4xl font-bold text-blue-600 mb-2" id="volumeNumber">0.00</div>
+                        <div
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                            m³
+                        </div>
+                    </div>
+
+                    <div class="text-center py-8 text-slate-500" id="noCalculation">
+                        <i class="fas fa-truck text-4xl mb-3 opacity-50"></i>
+                        <p>Masukkan dimensi kendaraan untuk menghitung volume</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="flex flex-wrap gap-3 justify-center mb-8">
+                <button type="button"
+                    class="btn-modern px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium shadow-md flex items-center gap-2"
+                    onclick="resetForm()">
+                    <i class="fas fa-redo"></i>
+                    Reset
+                </button>
+                <button type="button"
+                    class="btn-modern px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-md flex items-center gap-2"
+                    onclick="calculateVolume()">
+                    <i class="fas fa-calculator"></i>
+                    Hitung Volume
+                </button>
+                <button type="button"
+                    class="btn-modern px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onclick="saveData()" disabled id="saveBtn">
+                    <i class="fas fa-save"></i>
+                    Simpan Data
+                </button>
+            </div>
+        </form>
+
+        <!-- Tabel Data Tersimpan -->
+        <div class="bg-white rounded-xl card-shadow overflow-hidden animate-fade-in" id="dataTable"
+            style="display: none;">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-chart-bar text-blue-600"></i>
+                        <h2 class="text-xl font-semibold text-gray-800">Data Volume Tersimpan</h2>
+                    </div>
+                    <button
+                        class="btn-modern px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium shadow-md flex items-center gap-2"
+                        onclick="exportToPDF()">
+                        <i class="fas fa-download"></i>
+                        Export PDF
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                No</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                No Surat Jalan</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nopol</th>
+                            <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Volume (m³)</th>
+                            <th
+                                class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Data akan ditambahkan disini -->
+                    </tbody>
+                    <tfoot class="bg-gray-50">
+                        <tr>
+                            <th colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-gray-900">TOTAL
+                                VOLUME:</th>
+                            <th class="px-6 py-4 text-right text-lg font-bold text-blue-600" id="totalVolume">0,00</th>
+                            <th class="px-6 py-4"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Input Tanggal Pengiriman -->
+    <div class="fixed inset-0 z-50 hidden" id="dateModal">
+        <div class="modal-backdrop fixed inset-0" onclick="closeDateModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full animate-slide-up">
+                <div class="p-6 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-calendar text-blue-600"></i>
+                            <h3 class="text-lg font-semibold text-gray-800">Input Tanggal Pengiriman</h3>
+                        </div>
+                        <button onclick="closeDateModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-500 text-sm mb-4">Masukkan tanggal pengiriman untuk laporan PDF:</p>
+                    <div class="space-y-2">
+                        <label for="tanggalPengiriman" class="block text-sm font-medium text-gray-700">Tanggal
+                            Pengiriman</label>
+                        <input type="date"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                            id="tanggalPengiriman" required>
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-100 flex gap-3 justify-end">
+                    <button type="button"
+                        class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                        onclick="closeDateModal()">
+                        Batal
+                    </button>
+                    <button type="button"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                        onclick="processPDFExport()">
+                        Generate PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script>
+        let currentVolume = 0;
+        let savedData = [];
+        let dataCounter = 0;
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+
+            toast.className = `toast ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3`;
+            toast.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-auto text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+        function calculateVolume() {
+            const panjangCm = parseFloat(document.getElementById('panjang').value) || 0;
+            const lebarCm = parseFloat(document.getElementById('lebar').value) || 0;
+            const tinggiCm = parseFloat(document.getElementById('tinggi').value) || 0;
+            const potonganTinggiCm = parseFloat(document.getElementById('potongan_tinggi').value) || 0;
+
+            if (panjangCm <= 0 || lebarCm <= 0 || tinggiCm <= 0) {
+                showToast('Mohon masukkan nilai yang valid untuk panjang, lebar, dan tinggi', 'error');
+                return;
+            }
+
+            const tinggiEfektifCm = tinggiCm - potonganTinggiCm;
+            if (tinggiEfektifCm <= 0) {
+                showToast('Tinggi efektif (tinggi - potongan tinggi) harus lebih dari 0', 'error');
+                return;
+            }
+
+            const volumeCm3 = panjangCm * lebarCm * tinggiEfektifCm;
+            currentVolume = volumeCm3 / 1000000;
+            currentVolume = Math.floor(currentVolume * 100) / 100;
+
+            const volumeFormatted = currentVolume.toFixed(2).replace('.', ',');
+            document.getElementById('volumeNumber').textContent = volumeFormatted;
+            document.getElementById('volumeResult').style.display = 'block';
+            document.getElementById('noCalculation').style.display = 'none';
+            document.getElementById('saveBtn').disabled = false;
+        }
+
+        function resetForm() {
+            document.getElementById('calculatorForm').reset();
+            document.getElementById('volumeResult').style.display = 'none';
+            document.getElementById('noCalculation').style.display = 'block';
+            document.getElementById('saveBtn').disabled = true;
+            currentVolume = 0;
+        }
+
+        function saveData() {
+            const noSuratJalan = document.getElementById('no_surat_jalan').value.trim();
+            const noPolisi = document.getElementById('no_polisi').value.trim();
+
+            if (!noSuratJalan || !noPolisi || currentVolume <= 0) {
+                showToast('Mohon lengkapi semua data dan hitung volume terlebih dahulu', 'error');
+                return;
+            }
+
+            const duplicate = savedData.find(item => item.noSuratJalan.toLowerCase() === noSuratJalan.toLowerCase());
+            if (duplicate) {
+                showToast('No. Surat Jalan sudah ada! Gunakan nomor yang berbeda.', 'error');
+                return;
+            }
+
+            dataCounter++;
+            const newData = {
+                id: dataCounter,
+                noSuratJalan: noSuratJalan,
+                noPolisi: noPolisi,
+                volume: currentVolume.toFixed(2).replace('.', ',')
+            };
+
+            savedData.push(newData);
+            addRowToTable(newData);
+            document.getElementById('dataTable').style.display = 'block';
+            updateTotalVolume();
+
+            showToast(`Data berhasil disimpan dengan volume ${currentVolume.toFixed(2).replace('.', ',')} m³`, 'success');
+            resetForm();
+        }
+
+        function addRowToTable(data) {
+            const tableBody = document.getElementById('tableBody');
+            const row = tableBody.insertRow();
+            row.className = 'hover:bg-gray-50 transition-colors';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${savedData.length}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.noSuratJalan}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${data.noPolisi}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">${data.volume}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <button class="btn-modern px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm font-medium shadow-sm flex items-center gap-1 mx-auto" 
+                            onclick="deleteRow(${data.id}, this)">
+                        <i class="fas fa-trash text-xs"></i>
+                        Hapus
+                    </button>
+                </td>
+            `;
+        }
+
+        function deleteRow(id, button) {
+            if (confirm('Yakin ingin menghapus data ini?')) {
+                savedData = savedData.filter(item => item.id !== id);
+                const row = button.closest('tr');
+                row.remove();
+                updateRowNumbers();
+                updateTotalVolume();
+
+                if (savedData.length === 0) {
+                    document.getElementById('dataTable').style.display = 'none';
+                }
+
+                showToast('Data berhasil dihapus', 'success');
+            }
+        }
+
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+        }
+
+        function updateTotalVolume() {
+            let total = 0;
+            savedData.forEach(item => {
+                const volume = parseFloat(item.volume.replace(',', '.'));
+                total += volume;
+            });
+            document.getElementById('totalVolume').textContent = total.toFixed(2).replace('.', ',');
+        }
+
+        function exportToPDF() {
+            if (savedData.length === 0) {
+                showToast('Tidak ada data untuk diekspor!', 'error');
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggalPengiriman').value = today;
+            document.getElementById('dateModal').classList.remove('hidden');
+        }
+
+        function closeDateModal() {
+            document.getElementById('dateModal').classList.add('hidden');
+        }
+
+        function processPDFExport() {
+            const tanggalInput = document.getElementById('tanggalPengiriman').value;
+            if (!tanggalInput) {
+                showToast('Mohon masukkan tanggal pengiriman!', 'error');
+                return;
+            }
+
+            const tanggalObj = new Date(tanggalInput);
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            const tanggalFormatted = tanggalObj.toLocaleDateString('id-ID', options);
+
+            closeDateModal();
+            generatePDFWithDate(tanggalFormatted, tanggalInput);
+        }
+
+        function generatePDFWithDate(tanggalFormatted, tanggalInput) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.text('VolTrack - Laporan Volume Kendaraan', 20, 25);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text('Tanggal Pengiriman: ' + tanggalFormatted, 20, 40);
+            doc.text('Tanggal Cetak: ' + new Date().toLocaleDateString('id-ID'), 20, 50);
+
+            doc.setLineWidth(0.5);
+            doc.line(20, 55, 190, 55);
+
+            const tableData = savedData.map((item, index) => [
+                index + 1,
+                item.noSuratJalan,
+                item.noPolisi,
+                item.volume + ' m3'
+            ]);
+
+            let total = 0;
+            savedData.forEach(item => {
+                const volume = parseFloat(item.volume.replace(',', '.'));
+                total += volume;
+            });
+
+            tableData.push([
+                '', '', 'TOTAL:', total.toFixed(2).replace('.', ',') + ' m3'
+            ]);
+
+            doc.autoTable({
+                head: [['No', 'No Surat Jalan', 'Nopol', 'Volume (m3)']],
+                body: tableData,
+                startY: 65,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [52, 58, 64],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 11
+                },
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 5,
+                    halign: 'center'
+                },
+                columnStyles: {
+                    0: { halign: 'center', cellWidth: 15 },
+                    1: { halign: 'left', cellWidth: 50 },
+                    2: { halign: 'center', cellWidth: 40 },
+                    3: { halign: 'center', cellWidth: 35 }
+                },
+                didParseCell: function (data) {
+                    if (data.row.index === tableData.length - 1) {
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.fillColor = [240, 240, 240];
+                        data.cell.styles.textColor = [0, 0, 0];
+                        if (data.column.index === 2) {
+                            data.cell.styles.halign = 'right';
+                        }
+                    }
+                },
+                margin: { top: 65, left: 20, right: 20 }
+            });
+
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "italic");
+            doc.text('Generated by VolTrack System - ' + new Date().toLocaleString('id-ID'), 20, pageHeight - 15);
+
+            const dateForFile = tanggalInput.replace(/-/g, '');
+            const timeStr = new Date().toTimeString().slice(0, 5).replace(':', '');
+            const fileName = `voltrack_laporan_${dateForFile}_${timeStr}.pdf`;
+            doc.save(fileName);
+
+            showToast('PDF berhasil diunduh!', 'success');
+        }
+
+        // Auto calculate ketika user mengubah input
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputs = ['panjang', 'lebar', 'tinggi', 'potongan_tinggi'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', function () {
+                    const panjang = document.getElementById('panjang').value;
+                    const lebar = document.getElementById('lebar').value;
+                    const tinggi = document.getElementById('tinggi').value;
+                    if (panjang && lebar && tinggi) {
+                        calculateVolume();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
