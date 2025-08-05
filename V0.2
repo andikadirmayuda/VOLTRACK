@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 VolTrack - Sistem Tracking Volume Kendaraan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #0066cc;
+            font-weight: bold;
+            font-size: 2.5rem;
+        }
+
+        .header p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            border-left: 4px solid #0066cc;
+            padding-left: 10px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .btn-calculate {
+            background: linear-gradient(45deg, #007bff, #0066cc);
+            border: none;
+            padding: 12px 30px;
+            font-weight: bold;
+            border-radius: 25px;
+        }
+
+        .btn-save {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            padding: 12px 30px;
+            font-weight: bold;
+            border-radius: 25px;
+        }
+
+        .btn-reset {
+            background: linear-gradient(45deg, #6c757d, #495057);
+            border: none;
+            padding: 12px 30px;
+            font-weight: bold;
+            border-radius: 25px;
+        }
+
+        .volume-result {
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .volume-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0066cc;
+        }
+
+        .form-control:focus {
+            border-color: #0066cc;
+            box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+        }
+
+        /* Data Table Styling */
+        .data-table-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e3f2fd;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0066cc;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .table-title i {
+            margin-right: 10px;
+        }
+
+        .btn-export {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            padding: 12px 25px;
+            font-weight: bold;
+            border-radius: 25px;
+            color: white;
+            font-size: 0.95rem;
+            box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .btn-export:hover {
+            background: linear-gradient(45deg, #218838, #1ea085);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+            color: white;
+        }
+
+        .btn-export:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-export i {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+
+        .custom-table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-table thead th {
+            background: linear-gradient(45deg, #0066cc, #004499);
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .custom-table tbody td {
+            padding: 12px 15px;
+            text-align: center;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .volume-cell {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #0066cc;
+        }
+
+        .custom-table tfoot th {
+            background: linear-gradient(45deg, #28a745, #1e7e34);
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            border: none;
+            font-size: 1.1rem;
+        }
+
+        .btn-delete {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #dee2e6;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📦 VolTrack</h1>
+            <p>Sistem Tracking Volume Kendaraan</p>
+        </div>
+
+        <form id="calculatorForm">
+            @csrf
+            <!-- Dimensi Kendaraan -->
+            <div class="section-card">
+                <h5 class="section-title">📏 Dimensi Kendaraan</h5>
+                <p class="text-muted small">Ukuran dalam centimeter (cm)</p>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="panjang" class="form-label">Panjang (cm)</label>
+                        <input type="number" class="form-control" id="panjang" name="panjang" step="1" placeholder="600"
+                            required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="lebar" class="form-label">Lebar (cm)</label>
+                        <input type="number" class="form-control" id="lebar" name="lebar" step="1" placeholder="235"
+                            required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tinggi" class="form-label">Tinggi (cm)</label>
+                        <input type="number" class="form-control" id="tinggi" name="tinggi" step="1" placeholder="200"
+                            required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="potongan_tinggi" class="form-label">Potongan Tinggi (cm)</label>
+                        <input type="number" class="form-control" id="potongan_tinggi" name="potongan_tinggi" step="1"
+                            placeholder="32">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Volume Hasil Perhitungan -->
+            <div class="section-card">
+                <h5 class="section-title">📊 Volume Hasil Perhitungan</h5>
+                <p class="text-muted small">Volume dihitung otomatis: (Panjang × Lebar × (Tinggi - Potongan Tinggi)) /
+                    1.000.000</p>
+
+                <div class="alert alert-info">
+                    <strong>Contoh:</strong> Panjang = 600cm, Lebar = 235cm, Tinggi = 200cm, Potongan = 32cm<br>
+                    <strong>Perhitungan:</strong> 600 × 235 × (200-32) = 600 × 235 × 168 = 23.688.000 cm³
+                </div>
+
+                <div class="volume-result" id="volumeResult" style="display: none;">
+                    <div class="mb-2">
+                        <label class="form-label">Volume (m³)</label>
+                    </div>
+                    <div class="volume-number" id="volumeNumber">0.00</div>
+                    <div class="text-muted small mt-2">m³</div>
+                </div>
+
+                <div class="text-center mt-3" id="noCalculation">
+                    <p class="text-muted">Masukkan dimensi kendaraan untuk menghitung volume</p>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="text-center">
+                <button type="button" class="btn btn-secondary btn-reset me-2" onclick="resetForm()">
+                    Reset
+                </button>
+                <button type="button" class="btn btn-primary btn-calculate me-2" onclick="calculateVolume()">
+                    Hitung Volume
+                </button>
+                <button type="button" class="btn btn-success btn-save" onclick="saveData()" disabled id="saveBtn">
+                    Simpan Data
+                </button>
+            </div>
+        </form>
+
+        <!-- Tabel Data Tersimpan -->
+        <div class="data-table-section" id="dataTable" style="display: none;">
+            <div class="table-header">
+                <h5 class="table-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Data Volume Tersimpan
+                </h5>
+                <button class="btn btn-export" onclick="exportToPDF()" title="Download laporan dalam format PDF">
+                    <i class="fas fa-download"></i>
+                    Export PDF
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">No</th>
+                            <th width="60%">Volume (m³)</th>
+                            <th width="25%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data akan ditambahkan disini -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th class="text-end">TOTAL VOLUME:</th>
+                            <th id="totalVolume">0,00</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Input Tanggal Pengiriman -->
+    <div class="modal fade" id="dateModal" tabindex="-1" aria-labelledby="dateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dateModalLabel">📅 Input Tanggal Pengiriman</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Masukkan tanggal pengiriman untuk laporan PDF:</p>
+                    <div class="mb-3">
+                        <label for="tanggalPengiriman" class="form-label">Tanggal Pengiriman</label>
+                        <input type="date" class="form-control" id="tanggalPengiriman" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="processPDFExport()">Generate PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentVolume = 0;
+        let savedData = [];
+        let dataCounter = 0;
+
+        function calculateVolume() {
+            // Input dalam cm
+            const panjangCm = parseFloat(document.getElementById('panjang').value) || 0;
+            const lebarCm = parseFloat(document.getElementById('lebar').value) || 0;
+            const tinggiCm = parseFloat(document.getElementById('tinggi').value) || 0;
+            const potonganTinggiCm = parseFloat(document.getElementById('potongan_tinggi').value) || 0;
+
+            if (panjangCm <= 0 || lebarCm <= 0 || tinggiCm <= 0) {
+                alert('Mohon masukkan nilai yang valid untuk panjang, lebar, dan tinggi');
+                return;
+            }
+
+            const tinggiEfektifCm = tinggiCm - potonganTinggiCm;
+            if (tinggiEfektifCm <= 0) {
+                alert('Tinggi efektif (tinggi - potongan tinggi) harus lebih dari 0');
+                return;
+            }
+
+            // Hitung volume dalam cm³ dulu
+            const volumeCm3 = panjangCm * lebarCm * tinggiEfektifCm;
+
+            // Konversi ke m³ (dibagi 1.000.000)
+            currentVolume = volumeCm3 / 1000000;
+
+            // Bulatkan ke bawah dengan 2 desimal (23.688 menjadi 23.68)
+            currentVolume = Math.floor(currentVolume * 100) / 100;
+
+            // Tampilkan volume dengan 2 desimal dan format Indonesia (koma)
+            const volumeFormatted = currentVolume.toFixed(2).replace('.', ',');
+            document.getElementById('volumeNumber').textContent = volumeFormatted;
+            document.getElementById('volumeResult').style.display = 'block';
+            document.getElementById('noCalculation').style.display = 'none';
+            document.getElementById('saveBtn').disabled = false;
+        } function resetForm() {
+            document.getElementById('calculatorForm').reset();
+            document.getElementById('volumeResult').style.display = 'none';
+            document.getElementById('noCalculation').style.display = 'block';
+            document.getElementById('saveBtn').disabled = true;
+            currentVolume = 0;
+        }
+
+        function saveData() {
+            if (currentVolume <= 0) {
+                alert('Mohon hitung volume terlebih dahulu');
+                return;
+            }
+
+            // Simpan data tanpa perlu nomor surat jalan dan polisi
+            dataCounter++;
+            const newData = {
+                id: dataCounter,
+                volume: currentVolume.toFixed(2).replace('.', ',')
+            };
+
+            savedData.push(newData);
+            addRowToTable(newData);
+
+            // Tampilkan tabel jika ada data
+            document.getElementById('dataTable').style.display = 'block';
+
+            // Update total volume
+            updateTotalVolume();
+
+            alert(`Data berhasil disimpan!\n\nVolume: ${currentVolume.toFixed(2).replace('.', ',')} m³`);
+
+            // Reset form setelah menyimpan
+            resetForm();
+        }
+
+        function addRowToTable(data) {
+            const tableBody = document.getElementById('tableBody');
+            const row = tableBody.insertRow();
+            row.innerHTML = `
+                <td><strong>${savedData.length}</strong></td>
+                <td class="volume-cell">${data.volume} m³</td>
+                <td>
+                    <button class="btn btn-danger btn-sm btn-delete" onclick="deleteRow(${data.id}, this)" title="Hapus data">
+                        <i class="fas fa-trash-alt me-1"></i>Hapus
+                    </button>
+                </td>
+            `;
+        }
+
+        function deleteRow(id, button) {
+            if (confirm('Yakin ingin menghapus data ini?')) {
+                // Hapus dari array
+                savedData = savedData.filter(item => item.id !== id);
+
+                // Hapus baris dari tabel
+                const row = button.closest('tr');
+                row.remove();
+
+                // Update nomor urut
+                updateRowNumbers();
+
+                // Update total volume
+                updateTotalVolume();
+
+                // Sembunyikan tabel jika tidak ada data
+                if (savedData.length === 0) {
+                    document.getElementById('dataTable').style.display = 'none';
+                }
+            }
+        }
+
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+        }
+
+        function updateTotalVolume() {
+            let total = 0;
+            savedData.forEach(item => {
+                // Convert comma to dot for calculation
+                const volume = parseFloat(item.volume.replace(',', '.'));
+                total += volume;
+            });
+
+            // Display with comma format and m³ unit
+            document.getElementById('totalVolume').innerHTML = `<strong>${total.toFixed(2).replace('.', ',')} m³</strong>`;
+        }
+
+        function exportToPDF() {
+            if (savedData.length === 0) {
+                alert('Tidak ada data untuk diekspor!');
+                return;
+            }
+
+            // Set default tanggal hari ini
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggalPengiriman').value = today;
+
+            // Tampilkan modal untuk input tanggal
+            const modal = new bootstrap.Modal(document.getElementById('dateModal'));
+            modal.show();
+        }
+
+        function processPDFExport() {
+            const tanggalInput = document.getElementById('tanggalPengiriman').value;
+
+            if (!tanggalInput) {
+                alert('Mohon masukkan tanggal pengiriman!');
+                return;
+            }
+
+            // Convert tanggal ke format Indonesia
+            const tanggalObj = new Date(tanggalInput);
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            const tanggalFormatted = tanggalObj.toLocaleDateString('id-ID', options);
+
+            // Tutup modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('dateModal'));
+            modal.hide();
+
+            // Generate PDF dengan tanggal yang dipilih
+            generatePDFWithDate(tanggalFormatted, tanggalInput);
+        }
+
+        function generatePDFWithDate(tanggalFormatted, tanggalInput) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header Section
+            doc.setFillColor(0, 102, 204);
+            doc.rect(0, 0, 210, 35, 'F');
+
+            // Title
+            doc.setFontSize(18);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(255, 255, 255);
+            doc.text('VolTrack - Laporan Volume Kendaraan', 105, 20, { align: 'center' });
+
+            // Reset color
+            doc.setTextColor(0, 0, 0);
+
+            // Info Box
+            doc.setFillColor(245, 245, 245);
+            doc.rect(15, 45, 180, 20, 'F');
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(15, 45, 180, 20);
+
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text('Tanggal Pengiriman: ' + tanggalFormatted, 20, 53);
+            doc.text('Tanggal Cetak: ' + new Date().toLocaleDateString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }), 20, 60);
+
+            // Prepare table data
+            const tableData = savedData.map((item, index) => [
+                (index + 1).toString(),
+                item.volume.replace(',', '.') + ' m³'
+            ]);
+
+            // Calculate total
+            let total = 0;
+            savedData.forEach(item => {
+                const volume = parseFloat(item.volume.replace(',', '.'));
+                total += volume;
+            });
+
+            // Main Table
+            doc.autoTable({
+                head: [['No.', 'Volume (m³)']],
+                body: tableData,
+                startY: 75,
+                margin: { left: 40, right: 40 },
+                tableWidth: 130,
+                styles: {
+                    fontSize: 11,
+                    cellPadding: 6,
+                    halign: 'center',
+                    valign: 'middle'
+                },
+                headStyles: {
+                    fillColor: [0, 102, 204],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 12
+                },
+                columnStyles: {
+                    0: { cellWidth: 30 },
+                    1: { cellWidth: 100, fontStyle: 'bold' }
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 249, 250]
+                }
+            });
+
+            // Total Summary Box
+            const finalY = doc.lastAutoTable.finalY + 15;
+            doc.setFillColor(40, 167, 69);
+            doc.rect(40, finalY, 130, 15, 'F');
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(255, 255, 255);
+            doc.text('TOTAL VOLUME: ' + total.toFixed(2).replace('.', ',') + ' m³', 105, finalY + 9, { align: 'center' });
+
+            // Statistics Box
+            doc.setTextColor(0, 0, 0);
+            doc.setFillColor(240, 248, 255);
+            doc.rect(40, finalY + 25, 130, 20, 'F');
+            doc.setDrawColor(0, 102, 204);
+            doc.rect(40, finalY + 25, 130, 20);
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text('Total Data: ' + savedData.length + ' item', 45, finalY + 33);
+            doc.text('Rata-rata Volume: ' + (total / savedData.length).toFixed(2).replace('.', ',') + ' m³', 45, finalY + 40);
+
+            // Footer
+            const pageHeight = doc.internal.pageSize.height;
+            doc.setDrawColor(220, 220, 220);
+            doc.line(15, pageHeight - 20, 195, pageHeight - 20);
+
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(100, 100, 100);
+            doc.text('Generated by VolTrack System', 15, pageHeight - 12);
+            doc.text(new Date().toLocaleString('id-ID'), 15, pageHeight - 6);
+            doc.text('© VolTrack 2025', 195, pageHeight - 6, { align: 'right' });
+
+            // Save PDF
+            const dateForFile = tanggalInput.replace(/-/g, '');
+            const timeStr = new Date().toTimeString().slice(0, 5).replace(':', '');
+            const fileName = `VolTrack_Laporan_${dateForFile}_${timeStr}.pdf`;
+
+            doc.save(fileName);
+        }        // Auto calculate ketika user mengubah input
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputs = ['panjang', 'lebar', 'tinggi', 'potongan_tinggi'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', function () {
+                    // Auto calculate jika semua field required terisi
+                    const panjang = document.getElementById('panjang').value;
+                    const lebar = document.getElementById('lebar').value;
+                    const tinggi = document.getElementById('tinggi').value;
+
+                    if (panjang && lebar && tinggi) {
+                        calculateVolume();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
